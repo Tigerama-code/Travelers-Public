@@ -59,6 +59,11 @@ This repository is **published output, not source.** `site/` is the built web
 bundle and the releases hold the built Windows binaries; both are rebuilt and
 pushed here automatically whenever the source changes.
 
+Pages serves `site/` through `.github/workflows/pages.yml`, which needs
+**Settings → Pages → Source: GitHub Actions** switched on once. A workflow
+cannot switch it on for itself: creating a Pages site is an administration
+call, and no permission a workflow can declare covers it.
+
 The source itself lives in a separate private repository. Anything committed
 here by hand will be overwritten by the next publish, so there is nothing useful
 to send a pull request against.

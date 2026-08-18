@@ -31,13 +31,16 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # `enablement` switches Pages on for the repository rather than requiring
-      # somebody to have visited Settings first — the workflow already holds
-      # `pages: write`, so asking a human to click the same permission it has is
-      # a step that exists only to be forgotten.
+      # Pages has to be switched on by hand once, under
+      # Settings -> Pages -> Source: GitHub Actions.
+      #
+      # `configure-pages` offers an `enablement: true` that is supposed to spare
+      # anyone that click, and it was tried here: it fails with "Create Pages
+      # site failed. Resource not accessible by integration". Creating a Pages
+      # site is an *administration* call, and `pages: write` does not grant it —
+      # no permission this workflow can declare will. Once the setting is on,
+      # this step finds the site and every later run is automatic.
       - uses: actions/configure-pages@v5
-        with:
-          enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:
