@@ -1,0 +1,47 @@
+# Serves site/ as the Travelers website.
+#
+# The files in site/ are not written here — they are built from the private
+# source repository and pushed in by its publish workflow. This job only takes
+# what is already committed and hands it to Pages.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+
+      # `enablement` switches Pages on for the repository rather than requiring
+      # somebody to have visited Settings first — the workflow already holds
+      # `pages: write`, so asking a human to click the same permission it has is
+      # a step that exists only to be forgotten.
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
