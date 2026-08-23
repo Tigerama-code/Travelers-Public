@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Travelers — settle the island, trade with rivals</title>
+    <meta
+      name="description"
+      content="A peer-to-peer game of settlement and trade. Play free in the browser, or download it for Windows. No accounts, no server, nothing to pay for."
+    />
+    <!-- The mark on its own navy tile, because a tab bar's colour is not ours
+         to choose. `mark.svg` is the same drawing without the tile, inked for
+         the parchment medallion below. -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#0d1420" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#e6dbc2" media="(prefers-color-scheme: light)" />
+
+    <meta property="og:title" content="Travelers" />
+    <meta
+      property="og:description"
+      content="Settle the island, trade with rivals, and sail for what lies past the map. Free in the browser, or download for Windows."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://tigerama-code.github.io/Travelers-Public/" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /*
+       * The same material as the game: a leather binding holding a sunk paper
+       * well, and brass-edged plaques that drop flush when pressed.
+       *
+       * Both tables ship, and which one you get is your device's own setting —
+       * there is no toggle here. A landing page is a page you read once, and a
+       * control that changes nothing about what you came for is a control worth
+       * leaving out.
+       */
+      :root {
+        color-scheme: dark;
+
+        --page: #0d1420;
+        --page-glow: #1c2c4c;
+        --ink: #e8eef7;
+        --ink-muted: #93a0b4;
+
+        --leather: linear-gradient(180deg, #221b12, #181209);
+        --leather-edge: #4a3a24;
+        --well: #101828;
+        --bind-inlay: 10px;
+        --bind-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+        --bind-sheen: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+        --plaque: linear-gradient(180deg, #1c2233, #141a29);
+        --plaque-edge: #3a2f22;
+        --plaque-ink: #e8eef7;
+        --plaque-sheen: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+        --plaque-stand: 0 2px 0 #090c14;
+        --plaque-hover: rgba(255, 255, 255, 0.06);
+
+        --brass: linear-gradient(180deg, #33291a, #211a10);
+        --brass-edge: #c9a227;
+        --brass-ink: #e8cf92;
+        --brass-hover: rgba(201, 162, 39, 0.2);
+        --brass-sheen: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+
+        --accent: #c9a227;
+        --rule: #22304a;
+        --medallion: #f2e7c9;
+        --medallion-ink: #6b5117;
+      }
+
+      @media (prefers-color-scheme: light) {
+        :root {
+          color-scheme: light;
+
+          --page: #e6dbc2;
+          --page-glow: #f2ead8;
+          --ink: #241f18;
+          --ink-muted: #6b5a3c;
+
+          --leather: linear-gradient(180deg, #cdae7f, #bd9c69);
+          --leather-edge: #8a6a24;
+          --well: #f7f0e0;
+          --bind-shadow: 0 14px 30px rgba(90, 68, 30, 0.26);
+          --bind-sheen: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+
+          --plaque: linear-gradient(180deg, #fdf8ec, #f2e9d5);
+          --plaque-edge: #c8b696;
+          --plaque-ink: #241f18;
+          --plaque-sheen: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+          --plaque-stand: 0 2px 0 #cbb894;
+          --plaque-hover: rgba(60, 46, 30, 0.06);
+
+          --brass: linear-gradient(180deg, #f6e9c8, #e7d5a8);
+          --brass-edge: #8a6a24;
+          --brass-ink: #5c4318;
+          --brass-hover: rgba(138, 106, 36, 0.2);
+          --brass-sheen: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+
+          /* Brass as *text* has to go darker on paper: the #8a6a24 that makes a
+             good rule is 3.7:1 against this page. This is 4.5:1. */
+          --accent: #7a5c1c;
+          --rule: #c8b696;
+          --medallion: #fdf8ec;
+        }
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: clamp(20px, 5vw, 56px) 20px calc(clamp(20px, 5vw, 56px) + env(safe-area-inset-bottom));
+        font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+        font-size: 17px;
+        line-height: 1.55;
+        color: var(--ink);
+        background:
+          radial-gradient(ellipse at 50% 0%, var(--page-glow) 0%, var(--page) 60%),
+          var(--page);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      main {
+        max-width: 760px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: clamp(28px, 5vw, 44px);
+      }
+
+      /* --- the binding ------------------------------------------------- */
+
+      .bind {
+        padding: clamp(20px, 4vw, 30px);
+        border: 1px solid var(--leather-edge);
+        border-radius: 5px;
+        box-shadow: var(--bind-shadow), var(--bind-sheen);
+        background-image: linear-gradient(var(--well), var(--well)), var(--leather);
+        background-repeat: no-repeat, no-repeat;
+        background-position: var(--bind-inlay) var(--bind-inlay), 0 0;
+        background-size:
+          calc(100% - var(--bind-inlay) * 2) calc(100% - var(--bind-inlay) * 2),
+          100% 100%;
+      }
+
+      /* --- masthead ----------------------------------------------------- */
+
+      header {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .medallion {
+        width: 96px;
+        height: 96px;
+        display: grid;
+        place-items: center;
+        border-radius: 999px;
+        background: var(--medallion);
+        border: 2px solid var(--brass-edge);
+        box-shadow: var(--bind-sheen), 0 4px 12px rgba(0, 0, 0, 0.3);
+        color: var(--medallion-ink);
+      }
+
+      .medallion svg {
+        width: 70px;
+        height: 70px;
+        display: block;
+      }
+
+      h1 {
+        margin: 10px 0 0;
+        font-family: 'Fredoka', system-ui, sans-serif;
+        font-weight: 600;
+        font-size: clamp(2.6rem, 9vw, 3.4rem);
+        line-height: 1.05;
+        letter-spacing: -0.01em;
+      }
+
+      .tagline {
+        margin: 0;
+        max-width: 30ch;
+        color: var(--ink-muted);
+        font-size: clamp(1rem, 3.4vw, 1.1rem);
+        text-wrap: pretty;
+      }
+
+      /* --- the tile band ------------------------------------------------ */
+
+      /*
+       * Seven tiles of the actual board, laid as they sit on it: a half-step
+       * offset and a row pitch of three quarters, so the strip is a honeycomb
+       * rather than a row of loose hexagons. Purely decorative, so it is hidden
+       * from the accessibility tree and dropped entirely on narrow screens
+       * where it would crowd the thing you came to press.
+       */
+      .band {
+        display: flex;
+        justify-content: center;
+        gap: 0;
+        margin: -10px 0 -30px;
+        height: 128px;
+      }
+
+      .band img {
+        width: 74px;
+        height: 85px;
+        display: block;
+      }
+
+      .band picture {
+        display: block;
+      }
+
+      /* Half a tile down, and no gap: that is what makes hexes interlock rather
+         than sit in a row with holes between them. */
+      .band > :nth-child(even) {
+        transform: translateY(43px);
+      }
+
+      @media (max-width: 560px) {
+        .band {
+          display: none;
+        }
+      }
+
+      /* --- plaques ------------------------------------------------------ */
+
+      .routes {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .plaque {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 15px 18px;
+        min-height: 44px;
+        border-radius: 3px;
+        text-decoration: none;
+        color: var(--plaque-ink);
+        background: var(--plaque);
+        border: 1px solid var(--plaque-edge);
+        box-shadow: var(--plaque-sheen), var(--plaque-stand);
+        transition:
+          background 160ms cubic-bezier(0.2, 0.8, 0.3, 1),
+          transform 110ms cubic-bezier(0.2, 0.8, 0.3, 1),
+          box-shadow 110ms cubic-bezier(0.2, 0.8, 0.3, 1);
+      }
+
+      .plaque:hover {
+        background: var(--plaque-hover);
+      }
+
+      /* The travel and the standing edge are the same two pixels, so it reads
+         as one object moving rather than two things changing at once. */
+      .plaque:active {
+        transform: translateY(2px);
+        box-shadow: var(--plaque-sheen);
+      }
+
+      .plaque--brass {
+        color: var(--brass-ink);
+        background: var(--brass);
+        border-color: var(--brass-edge);
+        box-shadow: var(--brass-sheen), var(--plaque-stand);
+      }
+
+      .plaque--brass:hover {
+        background: var(--brass-hover);
+      }
+
+      .plaque--brass:active {
+        box-shadow: var(--brass-sheen);
+      }
+
+      .plaque svg {
+        flex: none;
+        width: 22px;
+        height: 22px;
+      }
+
+      .plaque__text {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        min-width: 0;
+      }
+
+      .plaque__name {
+        font-family: 'Fredoka', system-ui, sans-serif;
+        font-weight: 600;
+        font-size: 1.0625rem;
+      }
+
+      .plaque__note {
+        font-size: 0.8125rem;
+        color: var(--ink-muted);
+        text-wrap: pretty;
+      }
+
+      .plaque--brass .plaque__note {
+        color: inherit;
+        opacity: 0.75;
+      }
+
+      :where(a, button):focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+      }
+
+      /* --- prose blocks -------------------------------------------------- */
+
+      h2 {
+        margin: 0 0 10px;
+        font-family: 'Fredoka', system-ui, sans-serif;
+        font-weight: 600;
+        font-size: 1.25rem;
+      }
+
+      .facts {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .facts li {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+      }
+
+      .facts svg {
+        flex: none;
+        width: 19px;
+        height: 19px;
+        margin-top: 3px;
+        color: var(--accent);
+      }
+
+      .facts strong {
+        display: block;
+        font-weight: 600;
+      }
+
+      .facts span {
+        color: var(--ink-muted);
+        font-size: 0.9375rem;
+      }
+
+      .notes {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        font-size: 0.9375rem;
+        color: var(--ink-muted);
+      }
+
+      .notes li {
+        padding-left: 16px;
+        border-left: 2px solid var(--rule);
+        text-wrap: pretty;
+      }
+
+      .notes strong {
+        color: var(--ink);
+      }
+
+      a {
+        color: var(--accent);
+        text-underline-offset: 2px;
+      }
+
+      footer {
+        text-align: center;
+        font-size: 0.8125rem;
+        color: var(--ink-muted);
+        text-wrap: pretty;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <main>
+      <header>
+        <div class="medallion">
+          <img src="mark.svg" alt="Travelers" width="70" height="70" />
+        </div>
+        <h1>Travelers</h1>
+        <p class="tagline">Settle the island, trade with rivals, and sail for what lies past the map.</p>
+      </header>
+
+      <div class="band" aria-hidden="true">
+        <picture>
+          <source media="(prefers-color-scheme: light)" srcset="tiles/l-hills.svg" />
+          <img src="tiles/d-hills.svg" alt="" width="74" height="85" />
+        </picture>
+        <picture>
+          <source media="(prefers-color-scheme: light)" srcset="tiles/l-forest.svg" />
+          <img src="tiles/d-forest.svg" alt="" width="74" height="85" />
+        </picture>
+        <picture>
+          <source media="(prefers-color-scheme: light)" srcset="tiles/l-fields.svg" />
+          <img src="tiles/d-fields.svg" alt="" width="74" height="85" />
+        </picture>
+        <picture>
+          <source media="(prefers-color-scheme: light)" srcset="tiles/l-pasture.svg" />
+          <img src="tiles/d-pasture.svg" alt="" width="74" height="85" />
+        </picture>
+        <picture>
+          <source media="(prefers-color-scheme: light)" srcset="tiles/l-mountains.svg" />
+          <img src="tiles/d-mountains.svg" alt="" width="74" height="85" />
+        </picture>
+        <picture>
+          <source media="(prefers-color-scheme: light)" srcset="tiles/l-desert.svg" />
+          <img src="tiles/d-desert.svg" alt="" width="74" height="85" />
+        </picture>
+        <picture>
+          <source media="(prefers-color-scheme: light)" srcset="tiles/l-sea.svg" />
+          <img src="tiles/d-sea.svg" alt="" width="74" height="85" />
+        </picture>
+      </div>  <section class="bind">
+        <div class="routes">
+          <a class="plaque plaque--brass" href="play/">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+            <span class="plaque__text">
+              <span class="plaque__name">Play in the browser</span>
+              <span class="plaque__note">Nothing to install and nothing to trust. Send friends the link and a room code.</span>
+            </span>
+          </a>
+
+          <a
+            class="plaque"
+            href="https://github.com/Tigerama-code/Travelers-Public/releases/latest/download/Travelers-Setup.exe"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 3v11" />
+              <path d="M7.5 9.5 12 14l4.5-4.5" />
+              <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+            </svg>
+            <span class="plaque__text">
+              <span class="plaque__name">Download for Windows</span>
+              <span class="plaque__note">Installer, per-user — no administrator rights needed.</span>
+            </span>
+          </a>
+
+          <a
+            class="plaque"
+            href="https://github.com/Tigerama-code/Travelers-Public/releases/latest/download/Travelers-portable.exe"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="14" rx="2" />
+              <path d="M8 21h8" />
+              <path d="M12 18v3" />
+            </svg>
+            <span class="plaque__text">
+              <span class="plaque__name">Portable build</span>
+              <span class="plaque__note">A single file that runs without installing anything.</span>
+            </span>
+          </a>
+        </div>
+      </section>
+
+      <section class="bind">
+        <h2>What you get</h2>
+        <ul class="facts">
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" />
+              <path d="M15.5 8.5l-2 5-5 2 2-5 5-2Z" />
+            </svg>
+            <span>
+              <strong>Every expansion, 21 scenarios</strong>
+              Base game, Seafarers, Cities &amp; Knights, Explorers &amp; Pirates and Traders &amp; Barbarians.
+            </span>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M22 20v-2a4 4 0 0 0-3-3.87" />
+            </svg>
+            <span>
+              <strong>Two to six players, or on your own</strong>
+              Everyone joins from their own device with a five-letter code — or pass and play on one screen against bots.
+            </span>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.5 1.5" />
+              <path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.5-1.5" />
+            </svg>
+            <span>
+              <strong>No account, no server, no cost</strong>
+              Games run directly between players' devices, end-to-end encrypted. There is nothing to sign up for and nothing to pay.
+            </span>
+          </li>
+        </ul>
+      </section>
+
+      <section class="bind">
+        <h2>Worth knowing before you download</h2>
+        <ul class="notes">
+          <li>
+            <strong>Windows will warn you on first run.</strong> The build is unsigned — a certificate costs about $200 a year for
+            a game nobody is charged for. Choose <em>More info → Run anyway</em>, or play in the browser and skip the question.
+          </li>
+          <li>
+            <strong>Multiplayer needs internet, but not a server.</strong> Two browsers are introduced over a public relay and then
+            talk directly. Pass-and-play on one machine works with no connection at all.
+          </li>
+          <li>
+            <strong>Everyone needs the same version.</strong> The wire protocol is not versioned, so an out-of-date copy cannot play
+            with an up-to-date one. The installed build checks for updates on launch.
+          </li>
+        </ul>
+      </section>
+
+      <footer>
+        <p>
+          Built by <a href="https://github.com/Tigerama-code">Tigerama-code</a> ·
+          <a href="https://github.com/Tigerama-code/Travelers-Public">Downloads and release notes</a>
+        </p>
+        <p>
+          CATAN and its expansions are trademarks of Catan GmbH. This is an unofficial, non-commercial implementation built for
+          personal play, shipping no artwork or text from the published games.
+        </p>
+      </footer>
+    </main>
+  </body>
+</html>

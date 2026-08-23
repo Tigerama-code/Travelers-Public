@@ -4,7 +4,7 @@ A peer-to-peer game of settlement and trade. One player hosts from their own
 device, shares a five-letter room code, and everyone else joins by typing a
 name. **No accounts, no usernames, no server, no running costs.**
 
-### ▶ [Play in the browser](https://tigerama-code.github.io/Travelers-Public/)
+### ▶ [Play in the browser](https://tigerama-code.github.io/Travelers-Public/play/)
 
 Nothing to install and nothing to trust — this is the easiest way to get a game
 going with friends. Send them the link and the room code.
@@ -59,14 +59,24 @@ This repository is **published output, not source.** `site/` is the built web
 bundle and the releases hold the built Windows binaries; both are rebuilt and
 pushed here automatically whenever the source changes.
 
-Pages serves `site/` through `.github/workflows/pages.yml`, which needs
-**Settings → Pages → Source: GitHub Actions** switched on once. A workflow
-cannot switch it on for itself: creating a Pages site is an administration
-call, and no permission a workflow can declare covers it.
+Two folders are assembled into one site by `.github/workflows/pages.yml`:
 
-The source itself lives in a separate private repository. Anything committed
-here by hand will be overwritten by the next publish, so there is nothing useful
-to send a pull request against.
+| Folder | Served at | Written by |
+| --- | --- | --- |
+| `landing/` | `/` | hand, in this repository |
+| `site/` | `/play/` | the private source repository's publish workflow |
+
+They are kept apart because that publish does `rm -rf site` before copying, so
+anything of ours inside `site/` would be deleted by the next release. The
+landing page is the one part of this repository that *is* source, and it is
+safe to edit.
+
+Pages needs **Settings → Pages → Source: GitHub Actions** switched on once. A
+workflow cannot switch it on for itself: creating a Pages site is an
+administration call, and no permission a workflow can declare covers it.
+
+Everything under `site/` is built output. Anything committed there by hand will
+be overwritten by the next publish.
 
 ---
 

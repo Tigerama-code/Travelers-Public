@@ -1,14 +1,21 @@
-# Serves site/ as the Travelers website.
+# Serves the landing page and the game as one site.
 #
-# The files in site/ are not written here — they are built from the private
-# source repository and pushed in by its publish workflow. This job only takes
-# what is already committed and hands it to Pages.
+# Two folders, with different owners, assembled here:
+#
+#   landing/  ->  /        the front door. Written by hand, in this repository.
+#   site/     ->  /play/   the game. Built from the private source repository
+#                          and pushed in by its publish workflow.
+#
+# They are kept apart because that publish does `rm -rf site` before copying —
+# anything of ours inside site/ would be deleted by the next release. Assembling
+# at deploy time means neither folder has to know about the other.
 name: Deploy to GitHub Pages
 
 on:
   push:
     branches: [main]
     paths:
+      - 'landing/**'
       - 'site/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
@@ -42,9 +49,23 @@ jobs:
       # this step finds the site and every later run is automatic.
       - uses: actions/configure-pages@v5
 
+      # The game is built with Vite's `base: './'`, so every asset path in it is
+      # relative and it runs from /play/ exactly as it did from the root.
+      - name: Assemble the site
+        run: |
+          mkdir -p _site
+          cp -r landing/. _site/
+          if [ -d site ]; then
+            mkdir -p _site/play
+            cp -r site/. _site/play/
+          else
+            echo "::warning::No site/ yet — publishing the landing page alone. The game arrives with the next release from the source repository."
+          fi
+          find _site -maxdepth 2 -type f | sort | head -30
+
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: _site
 
       - id: deployment
         uses: actions/deploy-pages@v4
